@@ -19,7 +19,6 @@ class Product:
         return lst
         
     def __str__(self) -> str:
-        print(1)
         return "Product: " + self.name
 
 class Seller: 
