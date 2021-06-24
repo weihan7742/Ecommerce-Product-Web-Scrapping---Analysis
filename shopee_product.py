@@ -1,20 +1,20 @@
 #%%
 class Product: 
-    def __init__(self,name,desc,rating,no_rating,no_sold,preferred) -> None:
+    def __init__(self,name,desc,price,rating,no_rating,no_sold) -> None:
         self.name = name
         self.desc = desc
+        self.price = price
         self.rating = rating
         self.no_rating = no_rating
         self.no_sold = no_sold
-        self.preferred = preferred
 
     def get_list(self):
         lst = [self.name,
                 self.desc,
+                self.price,
                 self.rating,
                 self.no_rating,
-                self.no_sold,
-                self.preferred]
+                self.no_sold]
 
         return lst
         

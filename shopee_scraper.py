@@ -14,8 +14,6 @@ max_page = 0
 max_item = 50
 shopee_url = "https://shopee.com.my/search?keyword="+keyword+"&page="+str(start_page)+"sortBy=relevancy"
 
-test = '//*[@id="main"]/div/div[3]/div/div[2]/div/div[2]/div[1]'
-
 #%% 
 def scroll_down(driver):
     count = 0 
@@ -66,107 +64,110 @@ def navigate_item(browser,count,url):
 
     time.sleep(3)
 
-    return retrieve_product_info(browser), retrieve_seller_info(browser)
-
-def find_element(browser,element_xpath):
-
-    res = ""
+    res1 = None
+    res2 = None
 
     try:
-        res = browser.find_element_by_xpath(element_xpath).text
-    except NoSuchElementException:
-        # Retry again 5 times
-        count = 1
-        while res == "" and count < 5:
-            time.sleep(1)
-            try:
-                res = browser.find_element_by_xpath(element_xpath)
-            except NoSuchElementException:
-                count += 1 
-    return res 
-
-def find_sell_element(browser,first,second):
-    res = ""
-
-    sell_count = 1
-
-    element_xpath = first+str(sell_count)+second
-    try:
-        res = browser.find_element_by_xpath(element_xpath).text
-    except NoSuchElementException:
-        while res == "" and sell_count < 5:
-            time.sleep(1)
-            sell_count += 1
-            element_xpath = first+str(sell_count)+second
-            try:
-                res = browser.find_element_by_xpath(element_xpath)
-            except NoSuchElementException:
+        res1 = retrieve_product_info(browser)
+    except:
+        for i in range(3):
+            try: 
+                res1 = retrieve_product_info(browser)
+            except:
                 pass
+            else:
+                break
+
+    try:
+        res2 = retrieve_seller_info(browser)
+    except:
+        for i in range(3):
+            try: 
+                res2 = retrieve_seller_info(browser)
+            except:
+                pass
+            else:
+                break
+
+    return res1, res2
+
+# %%
+def find_by_class(browser,class_name):
     
+    res = ["n/a"]
+
+    try:
+        res = browser.find_elements_by_class_name(class_name)
+    except NoSuchElementException:
+        # Retry again 3 times
+        count = 1
+        while res == ["n/a"] and count < 3:
+            time.sleep(1)
+            try:
+                res = browser.find_elements_by_class_name(class_name)
+            except NoSuchElementException:
+                count += 1
+
     return res
 
 def retrieve_product_info(browser):
 
     # Retrieve all xpath manually 
-    prod_name_xpath = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[1]/span'
-    prod_desc_xpath = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[3]/div[2]/div[1]/div[1]/div[2]/div[2]/div/span'
-    prod_rating_xpath = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[2]/div[1]/div[1]'
-    prod_no_rating_xpath = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[2]/div[2]/div[1]'
-    prod_no_sold_xpath = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[2]/div[3]/div[1]'
-    prod_pref_xpath = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[1]/div'
+    class_prod_name = 'attM6y'
+    class_prod_rating = '_1mYa1t' # Might not exist
+    class_prod_no_rating = 'OitLRu'
+    class_prod_no_sold = 'aca9MM'
+    class_prod_price = '_3e_UQT'
+    class_prod_desc = '_3yZnxJ'
 
-    # Scrape data
-    prod_name = find_element(browser,prod_name_xpath)
-    prod_desc = find_element(browser,prod_desc_xpath)
-    prod_rating = find_element(browser,prod_rating_xpath)
+    # Handle prod_name
+    prod_name = ""
+    temp_prod_name = find_by_class(browser,class_prod_name)
+    for item in temp_prod_name:
+        prod_name += item.text
 
-    # Do not add product with no rating
-    if prod_rating == "":
-        return None
-
-    prod_no_rating = find_element(browser, prod_no_rating_xpath)
-    prod_no_sold = find_element(browser, prod_no_sold_xpath)
-
-    # Retrieved preferred
+    x_rating = False
+    # Handle prod_rating
     try:
-        prod_pref = browser.find_element_by_xpath(prod_pref_xpath).text
+        prod_rating = find_by_class(browser,class_prod_rating)[0].text
     except:
-        prod_pref = False # Does not exist
+        prod_rating = "n/a"
+        x_rating = True
+        print("No Rating.")
+        
+    # Handle prod_no_rating
+    if x_rating:
+        prod_no_rating = "0"
     else:
-        prod_pref = True # Exist
+        prod_no_rating = find_by_class(browser,class_prod_no_rating)[0].text
 
-    # Compile all info into Product object
-    product = Product(prod_name,prod_desc,prod_rating,prod_no_rating,prod_no_sold,prod_pref)
+    # Handle prod_no_sold
+    prod_no_sold = find_by_class(browser,class_prod_no_sold)[0].text
+
+    prod_price = find_by_class(browser,class_prod_price)[0].text
+
+    prod_desc = find_by_class(browser,class_prod_desc)[0].text    
+
+    product = Product(prod_name,prod_desc,prod_price,prod_rating,prod_no_rating,prod_no_sold)
 
     return product    
 
 def retrieve_seller_info(browser):
 
-    # Retrieve all xpath manually
+    class_sell_name = '_3uf2ae'
+    class_sell_info = 'zw2E3N'
 
-    sell_name_first = '//*[@id="main"]/div/div[2]/div[2]/div[2]/div[3]/div['
+    sell_name = find_by_class(browser,class_sell_name)[0].text
+    temp_sell_info = find_by_class(browser,class_sell_info)
 
+    sell_rating = temp_sell_info[0].text
+    sell_no_products = temp_sell_info[1].text
+    sell_resprate = temp_sell_info[2].text
+    sell_resptime = temp_sell_info[3].text
+    sell_follower = temp_sell_info[4].text
+    sell_joined = temp_sell_info[5].text
 
-    sell_name_xpath = ']/div[1]/div/div[1]'
-    sell_rating_xpath = ']/div[2]/div[1]/div/span'
-    sell_prod_xpath = ']/div[2]/div[1]/a/span'
-    sell_resprate_xpath = ']/div[2]/div[2]/div[1]/span'
-    sell_resptime_xpath = ']/div[2]/div[2]/div[2]/span'
-    sell_follower_xpath = ']/div[2]/div[3]/div[2]/span'
-    sell_joined_xpath = ']/div[2]/div[3]/div[1]/span'
-
-
-    # Assign data to variables
-    sell_name = find_sell_element(browser,sell_name_first,sell_name_xpath)
-    sell_rating = find_sell_element(browser,sell_name_first,sell_rating_xpath)
-    sell_prod = find_sell_element(browser,sell_name_first,sell_prod_xpath)
-    sell_resprate = find_sell_element(browser,sell_name_first,sell_resprate_xpath)
-    sell_resptime = find_sell_element(browser,sell_name_first,sell_resptime_xpath)
-    sell_follower = find_sell_element(browser,sell_name_first,sell_follower_xpath)
-    sell_joined = find_sell_element(browser,sell_name_first,sell_joined_xpath)
-    
-    # Compile all info into Seller object
-    seller = Seller(sell_name,sell_rating,sell_prod,sell_resprate,sell_resptime,sell_follower,sell_joined)
+    seller = Seller(sell_name,sell_rating,sell_no_products,sell_resprate,sell_resptime,sell_follower,sell_joined)
 
     return seller
 
@@ -191,21 +192,22 @@ def run():
     max_page = int(get_max_page(browser))
 
     file = open(keyword+"_shopee.csv","w",newline='',encoding='utf-8')
-    header = ['prod_name','prod_desc','prod_rating','prod_no_rating','prod_no_sold','prod_pref','sell_name','sell_rating','sell_no_products','sell_resprate','sell_resptime','sell_follower','sell_joined']
+    header = ['prod_name','prod_desc','prod_price','prod_rating','prod_no_rating','prod_no_sold','sell_name','sell_rating','sell_no_products','sell_resprate','sell_resptime','sell_follower','sell_joined']
 
     with file:
         writer = csv.writer(file)
         writer.writerow(header)
         for page in range(max_page):
+            print("####### Current page: " + str(page+1))
             new_url = shopee_url
             if page != 0: # Navigate to the next page
                 new_url = "https://shopee.com.my/search?keyword="+keyword+"&page="+str(page)+"sortBy=relevancy"
                 browser.get(new_url)
                 time.sleep(3)
             for item in range(max_item): # Loop through each item
-                print(item+1)
+                print("Item: " + str(item+1))
                 product,seller = navigate_item(browser,item+1,new_url)
-                if product is not None:
+                if product is not None and seller is not None:
                     writer.writerow(product.get_list()+seller.get_list())
                 time.sleep(2)
                 
@@ -215,5 +217,82 @@ def run():
 # %%
 if __name__ == '__main__':
     run()
+
+#%%
+from shopee_product import Seller,Product
+from selenium import webdriver
+from selenium.common.exceptions import *
+from selenium.webdriver.common.keys import Keys
+import time
+import pandas as pd
+import csv
+
+test_url3 = 'https://shopee.com.my/NongShim-Shin-Ramyun-Ramen-Kimchi-Neoguri-i.62424108.5441223724'
+
+class_prod_name = 'attM6y'
+class_prod_rating = '_1mYa1t' # Might not exist
+class_prod_no_rating = 'OitLRu'
+class_prod_no_sold = 'aca9MM'
+class_prod_price = '_3e_UQT'
+class_prod_desc = '_3yZnxJ'
+
+class_prod_x_rating = '_119xyB'
+
+class_sell_name = '_3uf2ae'
+class_sell_info = 'zw2E3N'
+
+browser = webdriver.Chrome()
+browser.get(test_url3)
+
+time.sleep(5)
+
+popup = browser.find_element_by_xpath('//*[@id="modal"]/div[1]/div[1]/div/div[3]/div[1]')
+popup.click()
+
+time.sleep(2)
+
+# Handle prod_name
+prod_name = ""
+temp_prod_name = find_by_class(browser,class_prod_name)
+for item in temp_prod_name:
+    prod_name += item.text
+
+x_rating = False
+# Handle prod_rating
+try:
+    prod_rating = find_by_class(browser,class_prod_rating)[0].text
+except:
+    prod_rating = "n/a"
+    x_rating = True
+    
+# Handle prod_no_rating
+if x_rating:
+    prod_no_rating = "0"
+else:
+    prod_no_rating = find_by_class(browser,class_prod_no_rating)[0].text
+
+# Handle prod_no_sold
+prod_no_sold = find_by_class(browser,class_prod_no_sold)[0].text
+
+prod_price = find_by_class(browser,class_prod_price)[0].text
+
+prod_desc = find_by_class(browser,class_prod_desc)[0].text    
+
+product = Product(prod_name,prod_desc,prod_price,prod_rating,prod_no_rating,prod_no_sold)
+print(product.get_list())
+
+sell_name = find_by_class(browser,'_3uf2ae')[0].text
+temp_sell_info = find_by_class(browser,'zw2E3N')
+
+sell_rating = temp_sell_info[0].text
+sell_no_products = temp_sell_info[1].text
+sell_resprate = temp_sell_info[2].text
+sell_resptime = temp_sell_info[3].text
+sell_follower = temp_sell_info[4].text
+sell_joined = temp_sell_info[5].text
+
+seller = Seller(sell_name,sell_rating,sell_no_products,sell_resprate,sell_resptime,sell_follower,sell_joined)
+
+print(seller.get_list())
 
 # %%
