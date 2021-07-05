@@ -139,7 +139,7 @@ def retrieve_product_info(browser):
     if x_rating:
         prod_no_rating = "0"
     else:
-        prod_no_rating = find_by_class(browser,class_prod_no_rating)[0].text
+        prod_no_rating = find_by_class(browser,class_prod_no_rating)[1].text
 
     # Handle prod_no_sold
     prod_no_sold = find_by_class(browser,class_prod_no_sold)[0].text
@@ -179,7 +179,7 @@ def run():
     options.add_argument('disable-infobars')
     options.add_argument('--disable-extensions')
 
-    browser = webdriver.Chrome(options=options)
+    browser = webdriver.Chrome()
     browser.get(shopee_url)
 
     time.sleep(4)
@@ -269,7 +269,7 @@ except:
 if x_rating:
     prod_no_rating = "0"
 else:
-    prod_no_rating = find_by_class(browser,class_prod_no_rating)[0].text
+    prod_no_rating = find_by_class(browser,class_prod_no_rating)[1].text
 
 # Handle prod_no_sold
 prod_no_sold = find_by_class(browser,class_prod_no_sold)[0].text
